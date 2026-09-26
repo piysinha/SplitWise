@@ -1,6 +1,5 @@
 package com.scaler.splitwise.models;
 
-import ch.qos.logback.core.model.Model;
 import com.scaler.splitwise.models.enums.ExpenseType;
 import jakarta.persistence.*;
 import lombok.Getter;
