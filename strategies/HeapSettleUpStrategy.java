@@ -7,10 +7,12 @@ import com.scaler.splitwise.models.UserExpense;
 import com.scaler.splitwise.models.enums.ExpenseType;
 import com.scaler.splitwise.models.enums.TransactionStatus;
 import com.scaler.splitwise.models.enums.UserExpenseType;
-import jakarta.annotation.Priority;
 import org.springframework.data.util.Pair;
+import org.springframework.stereotype.Component;
 import java.util.*;
 
+// The settle-up strategy Spring injects into SettleUpService.
+@Component
 public class HeapSettleUpStrategy implements SettleUpStrategy{
     @Override
     public List<Transaction> settleUp(List<Expense> expensesToSettleUp) {
@@ -46,9 +48,10 @@ public class HeapSettleUpStrategy implements SettleUpStrategy{
                 finalAmount.put(userExpense.getUser(), exisitingAmountOnThisPerson);
             }
         }
-        // create 2 priority queues.
-        PriorityQueue<Pair<User,Integer>> getterQueue = new PriorityQueue<>(finalAmount.size(),Collections.reverseOrder());
-        PriorityQueue<Pair<User,Integer>> payerQueue = new PriorityQueue<>(finalAmount.size());
+        // create 2 priority queues, ordered by amount (Pair isn't Comparable).
+        // getterQueue: the largest amount owed to someone first. payerQueue: the most negative (largest debt) first.
+        PriorityQueue<Pair<User,Integer>> getterQueue = new PriorityQueue<>(Comparator.comparing(Pair<User,Integer>::getSecond).reversed());
+        PriorityQueue<Pair<User,Integer>> payerQueue = new PriorityQueue<>(Comparator.comparing(Pair<User,Integer>::getSecond));
 
         // iterate over finalCount map, add user to each queue.
         for(Map.Entry<User,Integer> entry : finalAmount.entrySet()){
@@ -66,11 +69,14 @@ public class HeapSettleUpStrategy implements SettleUpStrategy{
             Pair<User,Integer> X = getterQueue.poll();
             Pair<User,Integer> Y = payerQueue.poll();
             Integer payAmount = Math.min(X.getSecond(),Math.abs(Y.getSecond()));
+            // Whoever isn't fully settled by this payment goes back in their queue.
             if(X.getSecond()-payAmount > 0){
                 Pair <User,Integer> updatedX = Pair.of(X.getFirst(),X.getSecond() - payAmount);
+                getterQueue.add(updatedX);
             }
             if(Y.getSecond()+payAmount < 0){
                 Pair<User,Integer> updatedY = Pair.of(Y.getFirst(),Y.getSecond() + payAmount);
+                payerQueue.add(updatedY);
             }
 
             Transaction transactionToBeDone = new Transaction(Y.getFirst(),X.getFirst(),payAmount,TransactionStatus.PENDING);
