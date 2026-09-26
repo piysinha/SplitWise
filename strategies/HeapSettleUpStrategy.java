@@ -7,10 +7,12 @@ import com.scaler.splitwise.models.UserExpense;
 import com.scaler.splitwise.models.enums.ExpenseType;
 import com.scaler.splitwise.models.enums.TransactionStatus;
 import com.scaler.splitwise.models.enums.UserExpenseType;
-import jakarta.annotation.Priority;
 import org.springframework.data.util.Pair;
+import org.springframework.stereotype.Component;
 import java.util.*;
 
+// The settle-up strategy Spring injects into SettleUpService.
+@Component
 public class HeapSettleUpStrategy implements SettleUpStrategy{
     @Override
     public List<Transaction> settleUp(List<Expense> expensesToSettleUp) {
