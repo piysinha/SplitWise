@@ -67,11 +67,14 @@ public class HeapSettleUpStrategy implements SettleUpStrategy{
             Pair<User,Integer> X = getterQueue.poll();
             Pair<User,Integer> Y = payerQueue.poll();
             Integer payAmount = Math.min(X.getSecond(),Math.abs(Y.getSecond()));
+            // Whoever isn't fully settled by this payment goes back in their queue.
             if(X.getSecond()-payAmount > 0){
                 Pair <User,Integer> updatedX = Pair.of(X.getFirst(),X.getSecond() - payAmount);
+                getterQueue.add(updatedX);
             }
             if(Y.getSecond()+payAmount < 0){
                 Pair<User,Integer> updatedY = Pair.of(Y.getFirst(),Y.getSecond() + payAmount);
+                payerQueue.add(updatedY);
             }
 
             Transaction transactionToBeDone = new Transaction(Y.getFirst(),X.getFirst(),payAmount,TransactionStatus.PENDING);
