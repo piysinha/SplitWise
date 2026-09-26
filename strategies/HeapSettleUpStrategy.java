@@ -46,9 +46,10 @@ public class HeapSettleUpStrategy implements SettleUpStrategy{
                 finalAmount.put(userExpense.getUser(), exisitingAmountOnThisPerson);
             }
         }
-        // create 2 priority queues.
-        PriorityQueue<Pair<User,Integer>> getterQueue = new PriorityQueue<>(finalAmount.size(),Collections.reverseOrder());
-        PriorityQueue<Pair<User,Integer>> payerQueue = new PriorityQueue<>(finalAmount.size());
+        // create 2 priority queues, ordered by amount (Pair isn't Comparable).
+        // getterQueue: the largest amount owed to someone first. payerQueue: the most negative (largest debt) first.
+        PriorityQueue<Pair<User,Integer>> getterQueue = new PriorityQueue<>(Comparator.comparing(Pair<User,Integer>::getSecond).reversed());
+        PriorityQueue<Pair<User,Integer>> payerQueue = new PriorityQueue<>(Comparator.comparing(Pair<User,Integer>::getSecond));
 
         // iterate over finalCount map, add user to each queue.
         for(Map.Entry<User,Integer> entry : finalAmount.entrySet()){
